@@ -1,6 +1,6 @@
 # Politai Social
 
-![Politai Social](/images/hero.png)
+![Politai Social](public/images/hero.png)
 
 Politai Social is a modern political social media app built with Next.js 13. It provides a platform for users to engage in political discussions, share opinions, and connect with like-minded individuals.
 
