@@ -1,0 +1,107 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+type FriendRequest {
+  senderId    String
+  senderImage String
+  senderName  String
+}
+
+model User {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  name            String?
+  hashPassword    String?
+  email           String?         @unique
+  emailVerified   DateTime?
+  image           String?
+  createdAt       DateTime        @default(now()) @updatedAt
+  updatedAt       DateTime        @updatedAt
+  birthday        String?
+  addressStreet   String?
+  friendsIds      String[]        @db.ObjectId
+  friendsRequests FriendRequest[]
+  country         String?         @default("Israel")
+  opinionsIds     String[]        @db.ObjectId
+  opinions        Opinion[]
+
+  accounts         Account[]
+  politicalProfile PoliticalProfile?
+}
+
+model Account {
+  id                String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId            String  @db.ObjectId
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.String
+  access_token      String? @db.String
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.String
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Opinion {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  title     String
+  body      String
+  topics    String[]
+  authorId  String    @db.ObjectId
+  author    User      @relation(fields: [authorId], references: [id])
+  comments  Comment[]
+  createdAt DateTime  @default(now()) @updatedAt
+}
+
+model Comment {
+  id        String  @id @default(auto()) @map("_id") @db.ObjectId
+  comment   String
+  opinion   Opinion @relation(fields: [opinionId], references: [id])
+  opinionId String  @db.ObjectId
+}
+
+model PoliticalProfile {
+  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+  religion         String
+  EconomicOpinion  String
+  PoliticalOpinion PoliticalType[]
+  ideology         String
+  description      String
+  userId           String          @unique @db.ObjectId
+  user             User            @relation(fields: [userId], references: [id])
+}
+
+enum PoliticalType {
+  LEFT
+  RIGHT
+  LIBERTARIAN
+  CENTRIST
+  CONSERVATIVE
+  PROGRESSIVE
+  SOCIALIST
+  GREEN
+  NATIONALIST
+  FASCIST
+  ANARCHIST
+  SOCIALDEMOCRAT
+  COMMUNIST
+  MODERATE
+  RADICAL
+  POPULIST
+  NEOCONSERVATIVE
+  NEOPOPULIST
+}

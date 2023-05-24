@@ -1,18 +1,30 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: [
-    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
-    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+    "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./src/app/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
-      backgroundImage: {
-        'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
-        'gradient-conic':
-          'conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))',
+      colors: {
+        "bg-feed": "#f7f7f7",
+        secondery: "#dfe3ee",
+        sidebar: "#D4D7DC",
+        "light-1": "#f7f7f7",
+        "light-2": "#ADB9C1",
+        "light-3": "#859CA2",
+        "light-4": "#608180",
+        "light-5": "#43655A",
+      },
+    },
+    container: {
+      center: true,
+      padding: "1rem",
+      screens: {
+        "2xl": "1500px",
       },
     },
   },
-  plugins: [],
-}
+  plugins: [require("@tailwindcss/forms")],
+};
