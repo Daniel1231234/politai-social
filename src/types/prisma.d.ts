@@ -1,5 +1,10 @@
-import { User } from "@prisma/client"
+import { Comment, User } from "@prisma/client"
 
+
+type Like = {
+    userId: string
+    userName: string
+}
 
 export interface Opinion {
     id: string
@@ -9,4 +14,6 @@ export interface Opinion {
     author: User
     authorId: string
     createdAt: Date
+    comments?: Comment[]
+    likes?: Like[]
 }

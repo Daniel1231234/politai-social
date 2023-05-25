@@ -68,10 +68,12 @@ model Opinion {
 }
 
 model Comment {
-  id        String  @id @default(auto()) @map("_id") @db.ObjectId
-  comment   String
-  opinion   Opinion @relation(fields: [opinionId], references: [id])
-  opinionId String  @db.ObjectId
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  comment     String
+  opinion     Opinion @relation(fields: [opinionId], references: [id])
+  opinionId   String  @db.ObjectId
+  authorName  String
+  authorImage String
 }
 
 model PoliticalProfile {

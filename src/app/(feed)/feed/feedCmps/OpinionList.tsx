@@ -20,7 +20,7 @@ const OpinionList: React.FC<OpinionListProps> = ({
   const [totalOpinions, setTotalOpinions] =
     useState<Opinion[]>(initialOpinions);
   const [undoOps, setUndoOps] = useState<Opinion[]>([]);
-  console.log(initialOpinions);
+
   useEffect(() => {
     pusherClient.subscribe("new-opinion-channel");
 

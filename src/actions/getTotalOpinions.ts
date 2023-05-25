@@ -7,7 +7,8 @@ const getTotalOpinions = async () => {
                 createdAt: "asc",
             },
             include: {
-                author: true
+                author: true,
+                comments: true
             }
         });
 

@@ -8,7 +8,6 @@ import { toPusherKey } from "@/lib/utils";
 import { FriendRequest, User } from "@prisma/client";
 import axios from "axios";
 import { SearchIcon } from "lucide-react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { toast } from "react-hot-toast";
