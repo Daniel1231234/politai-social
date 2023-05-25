@@ -1,11 +1,12 @@
 "use client";
 
-import { Opinion, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import React, { useState } from "react";
 import Button from "../ui/Button";
 import About from "./About";
 import Friends from "./Friends";
 import Opinions from "./Opinions";
+import { Opinion } from "@/types/prisma";
 
 interface ProfileContentProps {
   user: User;

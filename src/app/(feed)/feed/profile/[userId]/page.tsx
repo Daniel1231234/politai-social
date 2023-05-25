@@ -5,6 +5,7 @@ import AddFriendButton from "@/components/profileCmps/AddFriendButton";
 import ProfileContent from "@/components/profileCmps/ProfileContent";
 import ProfileHead from "@/components/profileCmps/ProfileHead";
 import Divider from "@/components/ui/Divider";
+import { Opinion } from "@/types/prisma";
 import { notFound, redirect } from "next/navigation";
 import React from "react";
 
@@ -25,6 +26,8 @@ const Page = async ({ params }: PageProps) => {
 
   const friends = await getUserFriends(user);
 
+  const userOpinions = user.opinions as Opinion[];
+
   const isAllreadyFrinds = friends?.some(
     (friend) => friend.id === loggedInUser.id
   );
@@ -37,7 +40,7 @@ const Page = async ({ params }: PageProps) => {
       <Divider />
       <ProfileContent
         user={user}
-        userOpinions={user.opinions}
+        userOpinions={userOpinions}
         friends={friends}
       />
     </div>

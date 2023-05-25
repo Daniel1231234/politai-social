@@ -1,11 +1,11 @@
 "use client";
 
 import { formatDate, formatDateHHMM } from "@/helpers";
-import { Opinion } from "@prisma/client";
 import { Heart } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import Divider from "../ui/Divider";
+import { Opinion } from "@/types/prisma";
 
 interface OpinionProps {
   item: Opinion;

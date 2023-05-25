@@ -1,6 +1,7 @@
-import { Opinion, User } from "@prisma/client";
+import { User } from "@prisma/client";
 import React, { useEffect, useState } from "react";
 import OpinionItem from "./OpinionItem";
+import { Opinion } from "@/types/prisma";
 
 interface OpinionsProps {
   user: User;
