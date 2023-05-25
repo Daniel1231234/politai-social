@@ -3,8 +3,8 @@
 import Button from "@/components/ui/Button";
 import Divider from "@/components/ui/Divider";
 import { formatedDistance } from "@/helpers";
-import { cn } from "@/lib/utils";
-import { Opinion, User } from "@prisma/client";
+import { Opinion } from "@/types/prisma";
+import { User } from "@prisma/client";
 import { StarIcon, UserPlus2Icon, X } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

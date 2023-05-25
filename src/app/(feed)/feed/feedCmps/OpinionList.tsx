@@ -1,18 +1,17 @@
 "use client";
 
-import { Opinion, User } from "@prisma/client";
-import React, { useCallback, useEffect, useState } from "react";
+import { User } from "@prisma/client";
+import React, { useEffect, useState } from "react";
 import { pusherClient } from "@/lib/pusher";
 import axios from "axios";
 import toast from "react-hot-toast";
 import OpinionPreview from "./OpinionPreview";
+import { Opinion } from "@/types/prisma";
 
 interface OpinionListProps {
   initialOpinions: Opinion[];
   currUserId: string;
 }
-
-const IMAGE_PLACEHOLER_URL = "/images/placeholder.jpg";
 
 const OpinionList: React.FC<OpinionListProps> = ({
   initialOpinions,
@@ -21,7 +20,7 @@ const OpinionList: React.FC<OpinionListProps> = ({
   const [totalOpinions, setTotalOpinions] =
     useState<Opinion[]>(initialOpinions);
   const [undoOps, setUndoOps] = useState<Opinion[]>([]);
-
+  console.log(initialOpinions);
   useEffect(() => {
     pusherClient.subscribe("new-opinion-channel");
 
