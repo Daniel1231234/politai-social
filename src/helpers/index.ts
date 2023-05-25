@@ -1,7 +1,6 @@
 import { formatDistance } from "date-fns";
 
 export function capitalizeName(fullName: string): string {
-  // Split the full name into an array of individual names
   const names: string[] = fullName.split(" ");
 
   const capitalFirstName = names[0].charAt(0).toUpperCase() + names[0].slice(1)

@@ -88,7 +88,7 @@ const Layout = async ({ children }: LayoutProps) => {
             </ul>
           </nav>
         </div>
-        <aside className="py-16 px-6 md:py-12 sm:py-3 w-full overflow-y-auto">
+        <aside className="py-16 px-6 md:py-12  w-full overflow-y-auto">
           {children}
         </aside>
       </div>

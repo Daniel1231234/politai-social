@@ -3,6 +3,7 @@ import getUserFriends from "@/actions/getUsersFriends";
 import ProfileContent from "@/components/profileCmps/ProfileContent";
 import ProfileHead from "@/components/profileCmps/ProfileHead";
 import Divider from "@/components/ui/Divider";
+import { Opinion } from "@/types/prisma";
 import { notFound } from "next/navigation";
 import React from "react";
 
@@ -18,7 +19,7 @@ const Page = async () => {
       <Divider />
       <ProfileContent
         user={user}
-        userOpinions={user.opinions}
+        userOpinions={user.opinions as Opinion[]}
         friends={friends}
       />
     </div>
