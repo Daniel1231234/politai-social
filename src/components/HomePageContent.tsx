@@ -80,7 +80,7 @@ const HomePageContent: React.FC<HomePageContentProps> = () => {
               height={450}
               sizes="60vw"
               priority
-              className="h-auto rounded-full opacity-80 mx-auto"
+              className="rounded-full opacity-80 mx-auto"
               src="/images/hero.png"
               alt="Hero"
             />

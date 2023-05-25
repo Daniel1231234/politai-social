@@ -40,7 +40,7 @@ const FeedHeader: React.FC<feedHeaderProps> = ({ user }) => {
       );
       pusherClient.unbind("incoming_friend_requests", friendRequestsHandler);
     };
-  }, [user.id]);
+  }, [user.id, addFriendRequest]);
 
   const handleFriendRequest = async (senderId: string, action: string) => {
     try {
