@@ -5,10 +5,10 @@ import { signIn, useSession } from "next-auth/react";
 import { useCallback, useEffect, useState } from "react";
 import { BsGoogle } from "react-icons/bs";
 import { FieldValues, SubmitHandler, useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import AuthSocialButton from "./AuthSocialButton";
 import { toast } from "react-hot-toast";
-import Input from "@/components/inputs/Input";
+import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
 type Variant = "LOGIN" | "REGISTER";
@@ -20,7 +20,6 @@ const AuthForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    console.log(session);
     if (session?.status === "authenticated") {
       router.push("/feed");
     }
@@ -46,63 +45,43 @@ const AuthForm = () => {
     },
   });
 
-  const onSubmit: SubmitHandler<FieldValues> = (data) => {
+  const onSubmit: SubmitHandler<FieldValues> = async (data) => {
     setIsLoading(true);
-
-    if (variant === "REGISTER") {
-      axios
-        .post("/api/register", data)
-        .then(() =>
-          signIn("credentials", {
-            ...data,
-            redirect: false,
-          })
-        )
-        .then((callback) => {
-          if (callback?.error) {
-            toast.error("Invalid credentials!");
-          }
-
-          if (callback?.ok) {
-            router.push("/feed");
-          }
-        })
-        .catch(() => toast.error("Something went wrong!"))
-        .finally(() => setIsLoading(false));
-    }
-
-    if (variant === "LOGIN") {
-      signIn("credentials", {
-        ...data,
-        redirect: false,
-      })
-        .then((callback) => {
-          if (callback?.error) {
-            toast.error("Invalid credentials!");
-          }
-
-          if (callback?.ok) {
-            router.push("/feed");
-          }
-        })
-        .finally(() => setIsLoading(false));
+    try {
+      if (variant === "REGISTER") {
+        await axios.post("/api/register", data);
+        const callback = await signIn("credentials", {
+          ...data,
+          redirect: false,
+        });
+        if (callback?.error) toast.error("Invalid credentials!");
+        if (callback?.ok) router.push("/feed");
+      }
+      if (variant === "LOGIN") {
+        signIn("credentials", {
+          ...data,
+          redirect: false,
+        });
+        router.push("/feed");
+      }
+    } catch (err) {
+      toast.error("Something went wrong!");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const socialAction = (action: string) => {
+  const socialAction = async (action: string) => {
     setIsLoading(true);
-
-    signIn(action, { redirect: false })
-      .then((callback) => {
-        if (callback?.error) {
-          toast.error("Invalid credentials!");
-        }
-
-        if (callback?.ok) {
-          router.push("/feed");
-        }
-      })
-      .finally(() => setIsLoading(false));
+    try {
+      const callback = await signIn(action, { redirect: false });
+      if (callback?.error) toast.error("Invalid credentials!");
+      if (callback?.ok) router.push("/feed");
+    } catch (err) {
+      toast.error("Something went wrong!");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -166,6 +145,7 @@ const AuthForm = () => {
           <div className="mt-6 flex gap-2">
             <AuthSocialButton
               icon={BsGoogle}
+              isLoading={isLoading}
               onClick={() => socialAction("google")}
             />
           </div>

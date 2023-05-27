@@ -10,12 +10,12 @@ import { Opinion } from "@/types/prisma";
 
 interface OpinionListProps {
   initialOpinions: Opinion[];
-  currUserId: string;
+  loggedinUser: User;
 }
 
 const OpinionList: React.FC<OpinionListProps> = ({
   initialOpinions,
-  currUserId,
+  loggedinUser,
 }) => {
   const [totalOpinions, setTotalOpinions] =
     useState<Opinion[]>(initialOpinions);
@@ -59,9 +59,9 @@ const OpinionList: React.FC<OpinionListProps> = ({
       <div className="flex flex-col gap-8 mt-8 w-full">
         {totalOpinions?.map((opinion) => {
           const isFriends = opinion.author?.friendsIds.some(
-            (friendId: string) => friendId === currUserId
+            (friendId: string) => friendId === loggedinUser.id
           );
-          const isUserOpinion = opinion.author?.id === currUserId;
+          const isUserOpinion = opinion.author?.id === loggedinUser.id;
           const isUndo = undoOps.some((opn) => opn.id === opinion.id);
 
           return (
@@ -74,6 +74,7 @@ const OpinionList: React.FC<OpinionListProps> = ({
               addFriend={addFriend}
               isUndo={isUndo}
               handleUndo={handleUndo}
+              loggedinUser={loggedinUser}
             />
           );
         })}

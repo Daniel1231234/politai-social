@@ -18,7 +18,7 @@ const Page = async () => {
     <>
       <NewOpinionInput user={user} />
       <Divider />
-      <OpinionList initialOpinions={initialOpinions} currUserId={user.id} />
+      <OpinionList initialOpinions={initialOpinions} loggedinUser={user} />
     </>
   );
 };

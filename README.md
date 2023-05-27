@@ -38,7 +38,7 @@ Politai Social is a modern political social media app built with Next.js 13. It 
 1. Clone the repository:
 
 ```bash
-git clone https://github.com/your-username/politai-social.git
+git clone https://github.com/daniel1231234/politai-social.git
 ```
 
 2. Navigate to the project directory:

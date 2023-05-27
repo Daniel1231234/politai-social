@@ -16,6 +16,12 @@ type FriendRequest {
   senderName  String
 }
 
+type Like {
+  id       String
+  userName String
+  userId   String
+}
+
 model User {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
   name            String?
@@ -64,6 +70,7 @@ model Opinion {
   authorId  String    @db.ObjectId
   author    User      @relation(fields: [authorId], references: [id])
   comments  Comment[]
+  likes     Like[]
   createdAt DateTime  @default(now()) @updatedAt
 }
 
@@ -72,6 +79,7 @@ model Comment {
   comment     String
   opinion     Opinion @relation(fields: [opinionId], references: [id])
   opinionId   String  @db.ObjectId
+  authorId    String
   authorName  String
   authorImage String
 }

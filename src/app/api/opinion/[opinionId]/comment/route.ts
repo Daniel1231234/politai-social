@@ -1,9 +1,16 @@
 import getCurrentUser from "@/actions/getCurrentUser";
 import prisma from "@/lib/prismadb";
+import { pusherServer } from "@/lib/pusher";
+import { toPusherKey } from "@/lib/utils";
 
-export async function POST(req: Request) {
+interface ParamsProps {
+    params: { opinionId: string };
+}
+
+export async function POST(req: Request, { params }: ParamsProps) {
     try {
-        const { commentText, opinionId } = await req.json();
+        const opinionId = params.opinionId
+        const { commentText } = await req.json();
         const currUser = await getCurrentUser()
 
         if (!currUser) {
@@ -19,20 +26,26 @@ export async function POST(req: Request) {
             data: {
                 opinionId,
                 comment: commentText,
+                authorId: currUser?.id,
                 authorImage: currUser?.image!,
                 authorName: currUser.name
             }
         });
 
-        // Update the corresponding Opinion with the new comment
-        await prisma.opinion.update({
-            where: { id: opinionId },
-            data: {
-                comments: {
-                    connect: { id: newComment.id }
+        await Promise.all([
+            prisma.opinion.update({
+                where: { id: opinionId },
+                data: {
+                    comments: {
+                        connect: { id: newComment.id }
+                    }
                 }
-            }
-        });
+            }),
+            pusherServer.trigger(toPusherKey(`opinion:${opinionId}:new_comment`), "new_comment_channel", newComment)
+
+        ])
+
+
 
         return new Response("Comment created successfully", { status: 200 });
     } catch (err) {
@@ -40,3 +53,6 @@ export async function POST(req: Request) {
         return new Response("Internal Server Error", { status: 500 });
     }
 }
+
+
+

@@ -4,9 +4,11 @@ import Button from "@/components/ui/Button";
 import Divider from "@/components/ui/Divider";
 import { formatedDistance } from "@/helpers";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { cn } from "@/lib/utils";
-import { Like, Opinion } from "@/types/prisma";
-import { User } from "@prisma/client";
+import { pusherClient } from "@/lib/pusher";
+import { cn, toPusherKey } from "@/lib/utils";
+import { Like } from "@/types";
+import { Opinion } from "@/types/prisma";
+import { Comment, User } from "@prisma/client";
 import axios from "axios";
 import {
   MessageSquareIcon,
@@ -15,10 +17,9 @@ import {
   UserPlus2Icon,
   X,
 } from "lucide-react";
-import { useSession } from "next-auth/react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
 
@@ -30,6 +31,7 @@ interface OpinionPreviewProps {
   addFriend: (userToAdd: User) => Promise<void>;
   isUndo: boolean;
   handleUndo: any;
+  loggedinUser: User;
 }
 
 const IMAGE_PLACEHOLER_URL = "/images/placeholder.jpg";
@@ -42,13 +44,16 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
   addFriend,
   isUndo,
   handleUndo,
+  loggedinUser,
 }) => {
   const router = useRouter();
   const [openComments, setOpenComments] = useState<boolean>(false);
   const [commentText, setCommentText] = useState<string>("");
-  const [opinionComments, setOpinionComments] = useState<Comment[]>([]);
-  const [opinionLikes, setOpinionLikes] = useState<Like[]>([]);
-  const session = useSession();
+  const [opinionComments, setOpinionComments] = useState<Comment[]>(
+    opinion.comments ?? []
+  );
+  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [opinionLikes, setOpinionLikes] = useState<Like[]>(opinion.likes ?? []);
 
   const opinionRef = useRef<HTMLDivElement | null>(null);
 
@@ -56,27 +61,99 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
 
   useOnClickOutside(opinionRef, handleCloseComments);
 
+  useEffect(() => {
+    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:new_comment`));
+    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:remove_comment`));
+
+    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:new_like`));
+    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:remove_like`));
+
+    const addCommentHandler = (newComment: Comment) => {
+      setOpinionComments((prev) => [...prev, newComment]);
+    };
+
+    const removeCommentHandler = (newComment: Comment) => {
+      setOpinionComments((prev) =>
+        prev.filter((cmt) => cmt.id !== newComment.id)
+      );
+    };
+
+    const addLikeHandler = (newComment: Like) => {
+      setOpinionLikes((prev) => [...prev, newComment]);
+    };
+
+    const removeLikeHandler = (newComment: Like) => {
+      setOpinionLikes((prev) => prev.filter((cmt) => cmt.id !== newComment.id));
+    };
+
+    pusherClient.bind("new_comment_channel", addCommentHandler);
+    pusherClient.bind("remove_comment_channel", removeCommentHandler);
+
+    pusherClient.bind("new_like_channel", addLikeHandler);
+    pusherClient.bind("remove_like_channel", removeLikeHandler);
+
+    return () => {
+      pusherClient.unsubscribe(
+        toPusherKey(`opinion:${opinion.id}:new_comment`)
+      );
+      pusherClient.unsubscribe(
+        toPusherKey(`opinion:${opinion.id}:remove_comment`)
+      );
+      pusherClient.unsubscribe(toPusherKey(`opinion:${opinion.id}:new_like`));
+      pusherClient.unsubscribe(
+        toPusherKey(`opinion:${opinion.id}:remove_like`)
+      );
+      pusherClient.unbind("new_comment_channel", addCommentHandler);
+      pusherClient.unbind("remove_comment_channel", removeCommentHandler);
+      pusherClient.unbind("new_like_channel", addLikeHandler);
+      pusherClient.unbind("remove_like_channel", removeLikeHandler);
+    };
+  }, [opinion.id]);
+
   const handleNewComment = async (e: React.FormEvent<HTMLElement>) => {
     e.preventDefault();
-    console.log(commentText);
+    setIsLoading(true);
     try {
-      const res = await axios.post("/api/comment", {
-        commentText: commentText,
-        opinionId: opinion.id,
+      await axios.post(`/api/opinion/${opinion.id}/comment`, {
+        commentText,
       });
-      console.log(res);
       setCommentText("");
+    } catch (err) {
+      toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleDeleteComment = async (
+    e: React.MouseEvent<HTMLButtonElement>,
+    commentid: string
+  ) => {
+    e.stopPropagation();
+    try {
+      await axios.delete(`/api/opinion/${opinion.id}/comment/${commentid}`);
     } catch (err) {
       toast.error("Something went wrong");
     }
   };
 
-  const handleNewLike = () => {
+  const handleNewLike = async () => {
     try {
-      const currUser = session.data?.user;
-      const newLike = { userId: currUser!.email!, userName: currUser!.name! };
-      setOpinionLikes((prev) => [...prev, newLike]);
-    } catch (err) {}
+      const isUserAllreadyLike = opinionLikes.some(
+        (like) => like.userId === loggedinUser.id
+      );
+      if (isUserAllreadyLike) return;
+
+      const newLike = {
+        id: "id" + Math.random().toString(16).slice(2),
+        userName: loggedinUser.name,
+        userId: loggedinUser.id,
+      };
+
+      await axios.post(`/api/opinion/${opinion.id}/like`, newLike);
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
   };
 
   return (
@@ -86,22 +163,24 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
     >
       {!isUndo ? (
         <>
-          <button
-            onClick={() => hideOpinion(opinion)}
-            className="absolute top-2 right-2 p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full"
-            title="close"
-            type="button"
-          >
-            <X className="h-6 w-6 cursor-pointer" />
-          </button>
-          {!isFriends && !isUserOpinion && (
+          <div className="flex items-center gap-1 absolute top-2 right-2">
+            {!isFriends && !isUserOpinion && (
+              <button
+                className="p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full"
+                onClick={() => addFriend(opinion.author)}
+              >
+                <UserPlus2Icon className="h-6 w-6 cursor-pointer" />
+              </button>
+            )}
             <button
-              className="absolute right-2 top-2"
-              onClick={() => addFriend(opinion.author)}
+              onClick={() => hideOpinion(opinion)}
+              className={`p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full`}
+              title="close"
+              type="button"
             >
-              <UserPlus2Icon className="w-7 h-7 p-1 text-gray-700 hover:text-blue-600 hover:bg-secondery" />
+              <X className="h-6 w-6 cursor-pointer" />
             </button>
-          )}
+          </div>
           <div className="user-profile-section relative flex mb-4">
             <Image
               placeholder="blur"
@@ -130,6 +209,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
           </p>
 
           <Divider className="my-2" />
+
           <div className="flex justify-between items-center">
             <div className="flex">
               <ThumbsUpIcon className="p-1 rounded-full bg-blue-400 shadow-md text-white" />
@@ -148,7 +228,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
 
           <div className="flex items-center justify-between w-full">
             <Button
-              onClick={handleNewLike}
+              onClick={() => handleNewLike()}
               title="like"
               size="sm"
               variant="ghost"
@@ -179,7 +259,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               >
                 <div className="relative w-6 h-6">
                   <Image
-                    src={opinion.author?.image!}
+                    src={loggedinUser.image!}
                     alt="profile"
                     fill
                     className="rounded-full"
@@ -201,6 +281,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
                 <Button
                   variant="ghost"
                   size="sm"
+                  isLoading={isLoading}
                   type="submit"
                   disabled={commentText.length === 0}
                 >
@@ -213,8 +294,18 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               </form>
               <div className="commentsContainer mt-4">
                 <Divider className="my-2" />
-                {opinion.comments?.map((comment, index) => (
-                  <div key={comment.id} className="mb-4">
+                {opinionComments?.map((comment) => (
+                  <div key={comment.id} className="mb-4 relative">
+                    {loggedinUser.id === comment.authorId && (
+                      <button
+                        onClick={(e) => handleDeleteComment(e, comment.id)}
+                        className="absolute top-2 right-2 p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full"
+                        title="delete comment"
+                        type="button"
+                      >
+                        <X className="h-4 w-4 font-thin" />
+                      </button>
+                    )}
                     <div className="flex items-center gap-2">
                       <div className="relative w-8 h-8">
                         <Image
@@ -233,9 +324,6 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
                     <p className="text-sm text-gray-600 mt-1">
                       {comment.comment}
                     </p>
-                    {index !== opinion?.comments!.length - 1 && (
-                      <div className="my-2 border-b border-gray-300" />
-                    )}
                   </div>
                 ))}
               </div>

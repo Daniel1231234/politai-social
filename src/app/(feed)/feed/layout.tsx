@@ -9,7 +9,7 @@ import MobileFeedLayout from "./feedCmps/MobileFeedLayout";
 import AppFooter from "@/components/AppFooter";
 
 export const metadata = {
-  title: "Politai-social",
+  title: "feed",
   description: "A social app",
 };
 

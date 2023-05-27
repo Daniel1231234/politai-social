@@ -17,10 +17,10 @@ const FilterOpinions: React.FC<FilterOpinionsProps> = ({
 
   useEffect(() => {
     const handleResize = () => {
-      setIsMediumScreen(window.innerWidth <= 768); // Adjust the breakpoint as needed
+      setIsMediumScreen(window.innerWidth <= 768);
     };
 
-    handleResize(); // Call initially to set the initial value
+    handleResize();
     window.addEventListener("resize", handleResize);
 
     return () => {
