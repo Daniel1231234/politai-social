@@ -6,6 +6,7 @@ import AddFriendButton from "@/components/profileCmps/AddFriendButton";
 import ProfileContent from "@/components/profileCmps/ProfileContent";
 import ProfileHead from "@/components/profileCmps/ProfileHead";
 import Divider from "@/components/ui/Divider";
+import { OpinionSchema } from "@/types/opinionType";
 import { notFound, redirect } from "next/navigation";
 import React from "react";
 
@@ -40,7 +41,7 @@ const Page = async ({ params }: PageProps) => {
       <Divider />
       <ProfileContent
         user={user}
-        userOpinions={userOpinions}
+        userOpinions={userOpinions as OpinionSchema[]}
         friends={friends}
       />
     </div>

@@ -6,11 +6,11 @@ import Button from "../ui/Button";
 import About from "./About";
 import Friends from "./Friends";
 import Opinions from "./Opinions";
-import { Opinion } from "@/types/prisma";
+import { OpinionSchema } from "@/types/opinionType";
 
 interface ProfileContentProps {
   user: User;
-  userOpinions: Opinion[];
+  userOpinions: OpinionSchema[];
   friends?: User[] | null;
 }
 

@@ -4,7 +4,6 @@ import Image from "next/image";
 import getCurrentUser from "@/actions/getCurrentUser";
 import { notFound } from "next/navigation";
 import { Group, HomeIcon } from "lucide-react";
-import { BsGithub } from "react-icons/bs";
 import MobileFeedLayout from "./feedCmps/MobileFeedLayout";
 import AppFooter from "@/components/AppFooter";
 
