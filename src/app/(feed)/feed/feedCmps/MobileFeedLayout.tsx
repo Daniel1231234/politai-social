@@ -9,12 +9,11 @@ import { usePathname } from "next/navigation";
 import Button from "@/components/ui/Button";
 import AppLogo from "@/components/AppLogo";
 import { User } from "@prisma/client";
-import { BsGithub } from "react-icons/bs";
 import { signOut } from "next-auth/react";
 import toast from "react-hot-toast";
 import FriendRequestPreviewModal from "@/components/modals/FriendRequestPreviewModal";
 import axios from "axios";
-import useFriendRequests from "@/app/context/useFriendRequests";
+import useFriendRequests from "@/context/useFriendRequests";
 import AppFooter from "@/components/AppFooter";
 
 interface MobileChatLayoutProps {

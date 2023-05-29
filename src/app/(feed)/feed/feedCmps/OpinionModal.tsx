@@ -10,6 +10,7 @@ import makeAnimated from "react-select/animated";
 import axios from "axios";
 import { toast } from "react-hot-toast";
 import { getInitialTopics } from "@/helpers";
+import LoadingModal from "@/components/modals/LoadingModal";
 
 interface OpinionModalProps {
   isOpen: boolean;
@@ -54,78 +55,81 @@ const OpinionModal: React.FC<OpinionModalProps> = ({
   };
 
   return (
-    <Transition appear show={isOpen} as={Fragment}>
-      <Dialog
-        as="div"
-        className="relative z-10"
-        onClose={() => setIsOpen(false)}
-      >
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
+    <>
+      {isLoading && <LoadingModal />}
+      <Transition appear show={isOpen} as={Fragment}>
+        <Dialog
+          as="div"
+          className="relative z-10"
+          onClose={() => setIsOpen(false)}
         >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-2xl transform rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
-                <Dialog.Title
-                  as="h3"
-                  className="text-lg font-medium leading-6 text-gray-900"
-                >
-                  Create new opinion
-                </Dialog.Title>
-                <div className="mt-2">
-                  <TextareaAutosize
-                    rows={4}
-                    value={opinion}
-                    onChange={(e) => setOpinion(e.target.value)}
-                    placeholder={`Make your voice heard, ${user.name}!`}
-                    className="block w-full resize-none  border-0 bg-transparent  text-gray-900 placeholder:text-gray-400 placeholder:ml-3 focus:ring-0 sm:py-1.5 sm:text-sm sm:leading-6"
-                  />
-                </div>
-                <div className="mt-2 flex flex-col gap-4">
-                  <span className="text-sm font-bold">Topics:</span>
-                  <ReactSelect
-                    onChange={selectTopics}
-                    closeMenuOnSelect={false}
-                    className="h-full block"
-                    components={animatedComponents}
-                    options={initialTopics}
-                    isMulti
-                  />
-                </div>
-
-                <div className="mt-4">
-                  <Button
-                    isLoading={isLoading}
-                    className=" !bg-blue-100 w-full  text-blue-900 hover:!bg-blue-200 "
-                    onClick={onSubmit}
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-2xl transform rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  <Dialog.Title
+                    as="h3"
+                    className="text-lg font-medium leading-6 text-gray-900"
                   >
-                    Post
-                  </Button>
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+                    Create new opinion
+                  </Dialog.Title>
+                  <div className="mt-2">
+                    <TextareaAutosize
+                      rows={4}
+                      value={opinion}
+                      onChange={(e) => setOpinion(e.target.value)}
+                      placeholder={`Make your voice heard, ${user.name}!`}
+                      className="block w-full resize-none  border-0 bg-transparent  text-gray-900 placeholder:text-gray-400 placeholder:ml-3 focus:ring-0 sm:py-1.5 sm:text-sm sm:leading-6"
+                    />
+                  </div>
+                  <div className="mt-2 flex flex-col gap-4">
+                    <span className="text-sm font-bold">Topics:</span>
+                    <ReactSelect
+                      onChange={selectTopics}
+                      closeMenuOnSelect={false}
+                      className="h-full block"
+                      components={animatedComponents}
+                      options={initialTopics}
+                      isMulti
+                    />
+                  </div>
+
+                  <div className="mt-4">
+                    <Button
+                      isLoading={isLoading}
+                      className=" !bg-blue-100 w-full  text-blue-900 hover:!bg-blue-200 "
+                      onClick={onSubmit}
+                    >
+                      Post
+                    </Button>
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
           </div>
-        </div>
-      </Dialog>
-    </Transition>
+        </Dialog>
+      </Transition>
+    </>
   );
 };
 

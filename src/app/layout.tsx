@@ -1,6 +1,7 @@
 import "./globals.css";
-import AuthContext from "./context/AuthContext";
-import ToasterContext from "./context/ToasterContext";
+import AuthContext from "../context/AuthContext";
+import ToasterContext from "../context/ToasterContext";
+import Providers from "@/components/Providers";
 
 export const metadata = {
   title: "Politai-social",
@@ -16,8 +17,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body suppressHydrationWarning>
         <AuthContext>
-          <ToasterContext />
-          {children}
+          <Providers>{children}</Providers>
         </AuthContext>
       </body>
     </html>

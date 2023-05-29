@@ -1,6 +1,6 @@
 "use client";
 
-import useFriendRequests from "@/app/context/useFriendRequests";
+import useFriendRequests from "@/context/useFriendRequests";
 import AppLogo from "@/components/AppLogo";
 import DropDown from "@/components/ui/DropDown";
 import { pusherClient } from "@/lib/pusher";

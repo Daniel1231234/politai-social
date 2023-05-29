@@ -5,10 +5,10 @@ import { Heart } from "lucide-react";
 import Image from "next/image";
 import React from "react";
 import Divider from "../ui/Divider";
-import { Opinion } from "@/types/prisma";
+import { OpinionSchema } from "@/types/opinionType";
 
 interface OpinionProps {
-  item: Opinion;
+  item: OpinionSchema;
   img: string;
   author?: string;
 }

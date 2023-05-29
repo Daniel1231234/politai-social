@@ -74,10 +74,9 @@ const HomePageContent: React.FC<HomePageContentProps> = () => {
               Explore Politai now!
             </Button>
           </div>
-          <div className="py-6 text-center relative">
+          <div className="py-6 w-[450px] h-[450px] text-center relative">
             <Image
-              width={400}
-              height={450}
+              fill
               sizes="60vw"
               priority
               className="rounded-full opacity-80 mx-auto"

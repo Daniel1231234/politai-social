@@ -1,7 +1,6 @@
 import getCurrentUser from "@/actions/getCurrentUser";
 import prisma from "@/lib/prismadb";
 import { pusherServer } from "@/lib/pusher";
-import { toPusherKey } from "@/lib/utils";
 
 interface ParamsProps {
     params: { opinionId: string };
@@ -17,35 +16,21 @@ export async function POST(req: Request, { params }: ParamsProps) {
             return new Response("Unauthorized", { status: 400 });
         }
 
-
         if (!commentText || !opinionId) {
             return new Response("Missing required fields", { status: 400 });
         }
 
         const newComment = await prisma.comment.create({
             data: {
-                opinionId,
                 comment: commentText,
+                opinion: { connect: { id: opinionId } },
                 authorId: currUser?.id,
                 authorImage: currUser?.image!,
                 authorName: currUser.name
             }
         });
 
-        await Promise.all([
-            prisma.opinion.update({
-                where: { id: opinionId },
-                data: {
-                    comments: {
-                        connect: { id: newComment.id }
-                    }
-                }
-            }),
-            pusherServer.trigger(toPusherKey(`opinion:${opinionId}:new_comment`), "new_comment_channel", newComment)
-
-        ])
-
-
+        await pusherServer.trigger(opinionId, 'comment:new', newComment)
 
         return new Response("Comment created successfully", { status: 200 });
     } catch (err) {

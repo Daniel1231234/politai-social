@@ -8,7 +8,8 @@ const getTotalOpinions = async () => {
             },
             include: {
                 author: true,
-                comments: true
+                comments: true,
+                likes: true
             }
         });
 

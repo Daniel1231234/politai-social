@@ -1,6 +1,7 @@
 import prisma from "@/lib/prismadb";
 import { pusherServer } from "@/lib/pusher";
 import { toPusherKey } from "@/lib/utils";
+import { NextResponse } from "next/server";
 
 interface ParamsProps {
     params: { commentId: string, opinionId: string }
@@ -14,12 +15,13 @@ export async function DELETE(req: Request, { params }: ParamsProps) {
             where: { id: commentId }
         })
 
+        if (!commentToDelete) return new NextResponse('This comment not exist', { status: 400 })
+
         await Promise.all([
             prisma.comment.delete({
                 where: { id: commentId }
             }),
-            pusherServer.trigger(toPusherKey(`opinion:${opinionId}:remove_comment`), "remove_comment_channel", commentToDelete)
-
+            pusherServer.trigger(opinionId, 'comment:delete', commentToDelete.id)
 
         ])
 

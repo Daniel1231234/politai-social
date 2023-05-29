@@ -15,16 +15,16 @@ export async function POST(req: Request) {
             where: { id: body.id },
         })
 
-        if (!userToAdd) return new Response('Unauthorized', { status: 400 })
+        if (!currUser || !userToAdd) return new Response('Unauthorized', { status: 400 })
 
         if (isAlreadyFriends) {
             return new Response('Already friends with this user', { status: 400 })
         }
 
         const senderData: FriendRequest = {
-            senderId: currUser!.id,
-            senderName: currUser!.name,
-            senderImage: currUser!.image!
+            senderId: currUser.id,
+            senderName: currUser.name,
+            senderImage: currUser.image!
         }
 
         const handleUpdate = (prev: FriendRequest[]) => {
@@ -33,20 +33,21 @@ export async function POST(req: Request) {
 
         const updatedFriendRequestField = handleUpdate(userToAdd.friendsRequests)
 
-        await prisma.user.update({
-            where: {
-                id: userToAdd.id
-            },
-            data: {
-                friendsRequests: updatedFriendRequestField
-            }
-        })
-
-        await pusherServer.trigger(
-            toPusherKey(`user:${userToAdd.id}:incoming_friend_requests`),
-            'incoming_friend_requests',
-            senderData
-        )
+        await Promise.all([
+            prisma.user.update({
+                where: {
+                    id: userToAdd.id
+                },
+                data: {
+                    friendsRequests: updatedFriendRequestField
+                }
+            }),
+            pusherServer.trigger(
+                toPusherKey(`user:${userToAdd.id}:incoming_friend_requests`),
+                'incoming_friend_requests',
+                senderData
+            )
+        ])
 
 
         return new NextResponse('OK')

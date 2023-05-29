@@ -16,9 +16,7 @@ export async function POST(req: Request) {
             friendsRequests: [],
             friendsIds: [],
             opinionsIds: [],
-            politicalProfile: {},
-            birthday: "",
-            addressStreet: ""
+            birthday: new Date(1, 1, 1980),
         }
     })
 

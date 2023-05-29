@@ -4,11 +4,9 @@ import Button from "@/components/ui/Button";
 import Divider from "@/components/ui/Divider";
 import { formatedDistance } from "@/helpers";
 import { useOnClickOutside } from "@/hooks/useOnClickOutside";
-import { pusherClient } from "@/lib/pusher";
-import { cn, toPusherKey } from "@/lib/utils";
-import { Like } from "@/types";
-import { Opinion } from "@/types/prisma";
-import { Comment, User } from "@prisma/client";
+import { cn } from "@/lib/utils";
+import { OpinionSchema } from "@/types/opinionType";
+import { Comment, Like, User } from "@prisma/client";
 import axios from "axios";
 import {
   MessageSquareIcon,
@@ -19,15 +17,18 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState, useCallback, useEffect } from "react";
 import { toast } from "react-hot-toast";
 import TextareaAutosize from "react-textarea-autosize";
+import UndoOpinion from "./UndoOpinion";
+import LoadingModal from "@/components/modals/LoadingModal";
+import { pusherClient } from "@/lib/pusher";
 
 interface OpinionPreviewProps {
-  opinion: Opinion;
+  opinion: OpinionSchema;
   isFriends: boolean;
   isUserOpinion: boolean;
-  hideOpinion: (opinion: Opinion) => void;
+  hideOpinion: (opinion: OpinionSchema) => void;
   addFriend: (userToAdd: User) => Promise<void>;
   isUndo: boolean;
   handleUndo: any;
@@ -47,74 +48,86 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
   loggedinUser,
 }) => {
   const router = useRouter();
-  const [openComments, setOpenComments] = useState<boolean>(false);
   const [commentText, setCommentText] = useState<string>("");
-  const [opinionComments, setOpinionComments] = useState<Comment[]>(
-    opinion.comments ?? []
-  );
+  const [openComments, setOpenComments] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [opinionLikes, setOpinionLikes] = useState<Like[]>(opinion.likes ?? []);
+  const [currOpinion, setCurrOpinion] = useState<OpinionSchema>(opinion);
 
   const opinionRef = useRef<HTMLDivElement | null>(null);
 
-  const handleCloseComments = () => setOpenComments(false);
+  const isUserAllreadyLike = currOpinion.likes.some(
+    (like) => like.authorId === loggedinUser.id
+  );
+
+  const handleCloseComments = useCallback(() => setOpenComments(false), []);
 
   useOnClickOutside(opinionRef, handleCloseComments);
 
   useEffect(() => {
-    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:new_comment`));
-    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:remove_comment`));
+    if (!currOpinion) return;
+    pusherClient.subscribe(currOpinion.id);
 
-    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:new_like`));
-    pusherClient.subscribe(toPusherKey(`opinion:${opinion.id}:remove_like`));
-
-    const addCommentHandler = (newComment: Comment) => {
-      setOpinionComments((prev) => [...prev, newComment]);
+    const handleNewComment = (newComment: Comment) => {
+      setCurrOpinion((prevOpinion) => {
+        // Only update comments if the new comment belongs to the current opinion
+        if (prevOpinion.id === newComment.opinionId) {
+          const updatedComments = [...prevOpinion.comments, newComment];
+          return { ...prevOpinion, comments: updatedComments };
+        }
+        return prevOpinion;
+      });
     };
 
-    const removeCommentHandler = (newComment: Comment) => {
-      setOpinionComments((prev) =>
-        prev.filter((cmt) => cmt.id !== newComment.id)
-      );
+    const handleDeleteComment = (commentId: string) => {
+      setCurrOpinion((prevOpinion) => {
+        // Only update comments if the deleted comment belongs to the current opinion
+        const updatedComments = prevOpinion.comments.filter(
+          (comment) => comment.id !== commentId
+        );
+        return { ...prevOpinion, comments: updatedComments };
+      });
     };
 
-    const addLikeHandler = (newComment: Like) => {
-      setOpinionLikes((prev) => [...prev, newComment]);
+    const handleNewLike = (newLike: Like) => {
+      setCurrOpinion((prevOpinion) => {
+        // Only update likes if the new like belongs to the current opinion
+        if (prevOpinion.id === newLike.opinionId) {
+          const updatedLikes = [...prevOpinion.likes, newLike];
+          return { ...prevOpinion, likes: updatedLikes };
+        }
+        return prevOpinion;
+      });
     };
 
-    const removeLikeHandler = (newComment: Like) => {
-      setOpinionLikes((prev) => prev.filter((cmt) => cmt.id !== newComment.id));
+    const handleDeleteLike = (likeId: string) => {
+      setCurrOpinion((prevOpinion) => {
+        // Only update likes if the deleted like belongs to the current opinion
+        const updatedLikes = prevOpinion.likes.filter(
+          (like) => like.id !== likeId
+        );
+        return { ...prevOpinion, likes: updatedLikes };
+      });
     };
 
-    pusherClient.bind("new_comment_channel", addCommentHandler);
-    pusherClient.bind("remove_comment_channel", removeCommentHandler);
-
-    pusherClient.bind("new_like_channel", addLikeHandler);
-    pusherClient.bind("remove_like_channel", removeLikeHandler);
+    pusherClient.bind("comment:new", handleNewComment);
+    pusherClient.bind("comment:delete", handleDeleteComment);
+    pusherClient.bind("like:new", handleNewLike);
+    pusherClient.bind("like:delete", handleDeleteLike);
 
     return () => {
-      pusherClient.unsubscribe(
-        toPusherKey(`opinion:${opinion.id}:new_comment`)
-      );
-      pusherClient.unsubscribe(
-        toPusherKey(`opinion:${opinion.id}:remove_comment`)
-      );
-      pusherClient.unsubscribe(toPusherKey(`opinion:${opinion.id}:new_like`));
-      pusherClient.unsubscribe(
-        toPusherKey(`opinion:${opinion.id}:remove_like`)
-      );
-      pusherClient.unbind("new_comment_channel", addCommentHandler);
-      pusherClient.unbind("remove_comment_channel", removeCommentHandler);
-      pusherClient.unbind("new_like_channel", addLikeHandler);
-      pusherClient.unbind("remove_like_channel", removeLikeHandler);
+      pusherClient.unsubscribe(currOpinion.id);
+      pusherClient.unbind("comment:new", handleNewComment);
+      pusherClient.unbind("comment:delete", handleDeleteComment);
+      pusherClient.unbind("like:new", handleNewLike);
+      pusherClient.unbind("like:delete", handleDeleteLike);
     };
-  }, [opinion.id]);
+  }, [currOpinion]);
 
   const handleNewComment = async (e: React.FormEvent<HTMLElement>) => {
     e.preventDefault();
     setIsLoading(true);
     try {
-      await axios.post(`/api/opinion/${opinion.id}/comment`, {
+      await axios.post(`/api/opinion/${currOpinion.id}/comment`, {
         commentText,
       });
       setCommentText("");
@@ -130,32 +143,50 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
     commentid: string
   ) => {
     e.stopPropagation();
+    setIsLoading(true);
     try {
-      await axios.delete(`/api/opinion/${opinion.id}/comment/${commentid}`);
+      await axios.delete(`/api/opinion/${currOpinion.id}/comment/${commentid}`);
     } catch (err) {
       toast.error("Something went wrong");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleNewLike = async () => {
     try {
-      const isUserAllreadyLike = opinionLikes.some(
-        (like) => like.userId === loggedinUser.id
-      );
       if (isUserAllreadyLike) return;
 
       const newLike = {
-        id: "id" + Math.random().toString(16).slice(2),
-        userName: loggedinUser.name,
-        userId: loggedinUser.id,
+        authorName: loggedinUser.name,
+        authorId: loggedinUser.id,
+        authorImage: loggedinUser.image,
       };
 
-      await axios.post(`/api/opinion/${opinion.id}/like`, newLike);
+      await axios.post(`/api/opinion/${currOpinion.id}/like`, newLike);
     } catch (err) {
       toast.error("Something went wrong");
     }
   };
 
+  const handleDeleteLike = async (likes: Like[]) => {
+    try {
+      console.log(likes);
+      const likeToDelete = likes.find(
+        (like) => like.authorId === loggedinUser.id
+      );
+      console.log(likeToDelete);
+      if (!likeToDelete) return;
+      const res = await axios.delete(
+        `/api/opinion/${currOpinion.id}/like/${likeToDelete.id}`
+      );
+      console.log(res);
+    } catch (err) {
+      toast.error("Something went wrong");
+    }
+  };
+
+  if (isLoading) return <LoadingModal />;
   return (
     <div
       className="opinion-container px-5 py-4 relative bg-white shadow rounded-lg w-full"
@@ -167,13 +198,13 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
             {!isFriends && !isUserOpinion && (
               <button
                 className="p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full"
-                onClick={() => addFriend(opinion.author)}
+                onClick={() => addFriend(currOpinion.author)}
               >
                 <UserPlus2Icon className="h-6 w-6 cursor-pointer" />
               </button>
             )}
             <button
-              onClick={() => hideOpinion(opinion)}
+              onClick={() => hideOpinion(currOpinion)}
               className={`p-1 text-gray-500 hover:bg-gray-50 hover:rounded-full`}
               title="close"
               type="button"
@@ -181,6 +212,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               <X className="h-6 w-6 cursor-pointer" />
             </button>
           </div>
+
           <div className="user-profile-section relative flex mb-4">
             <Image
               placeholder="blur"
@@ -188,38 +220,51 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               width={48}
               height={48}
               className="rounded-full"
-              src={opinion?.author?.image ?? IMAGE_PLACEHOLER_URL}
+              src={currOpinion?.author?.image ?? IMAGE_PLACEHOLER_URL}
               alt="User Profile"
             />
             <div
               className="ml-2 mt-0.5 cursor-pointer"
-              onClick={() => router.push(`/feed/profile/${opinion?.authorId}`)}
+              onClick={() =>
+                router.push(`/feed/profile/${currOpinion?.authorId}`)
+              }
             >
               <span className="block font-medium text-base leading-snug text-black">
-                {opinion?.author?.name}
+                {currOpinion?.author?.name}
               </span>
               <span className="block text-sm text-gray-500 font-light leading-snug">
-                {formatedDistance(opinion.createdAt)}
+                {formatedDistance(currOpinion.createdAt)}
               </span>
             </div>
           </div>
 
           <p className="opinion-text text-gray-800 leading-snug md:leading-normal">
-            {opinion?.body}
+            {currOpinion?.body}
           </p>
 
           <Divider className="my-2" />
 
           <div className="flex justify-between items-center">
-            <div className="flex">
-              <ThumbsUpIcon className="p-1 rounded-full bg-blue-400 shadow-md text-white" />
+            <div
+              className="flex"
+              onClick={() => handleDeleteLike(currOpinion.likes)}
+            >
+              <ThumbsUpIcon
+                className={cn(
+                  `p-1 rounded-full bg-blue-400 shadow-md text-white`,
+                  {
+                    "bg-blue-400": !isUserAllreadyLike,
+                    "bg-blue-600": isUserAllreadyLike,
+                  }
+                )}
+              />
               <span className="ml-1 text-gray-500 font-light">
-                {opinion?.likes?.length ?? 0}
+                {currOpinion?.likes?.length ?? 0}
               </span>
             </div>
             <div className="flex">
               <p className="text-gray-600 text-sm font-light">
-                {opinion?.comments?.length ?? 0} comments
+                {currOpinion?.comments?.length ?? 0} comments
               </p>
             </div>
           </div>
@@ -228,14 +273,20 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
 
           <div className="flex items-center justify-between w-full">
             <Button
-              onClick={() => handleNewLike()}
+              onClick={() => {
+                if (isUserAllreadyLike) {
+                  handleDeleteLike(currOpinion.likes);
+                } else {
+                  handleNewLike();
+                }
+              }}
               title="like"
               size="sm"
               variant="ghost"
               className="flex items-center gap-1 font-normal flex-1"
             >
               <ThumbsUpIcon />
-              <span>Like</span>
+              <span>{isUserAllreadyLike ? "Unlike" : "Like"}</span>
             </Button>
             <Button
               onClick={() => setOpenComments(true)}
@@ -251,6 +302,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
           </div>
 
           <Divider className="my-2" />
+
           {openComments && (
             <>
               <form
@@ -259,6 +311,8 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               >
                 <div className="relative w-6 h-6">
                   <Image
+                    placeholder="blur"
+                    blurDataURL={IMAGE_PLACEHOLER_URL}
                     src={loggedinUser.image!}
                     alt="profile"
                     fill
@@ -294,7 +348,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
               </form>
               <div className="commentsContainer mt-4">
                 <Divider className="my-2" />
-                {opinionComments?.map((comment) => (
+                {currOpinion.comments.map((comment) => (
                   <div key={comment.id} className="mb-4 relative">
                     {loggedinUser.id === comment.authorId && (
                       <button
@@ -331,17 +385,7 @@ const OpinionPreview: React.FC<OpinionPreviewProps> = ({
           )}
         </>
       ) : (
-        <div className="flex items-center justify-between p-1">
-          <div className="flex flex-col">
-            <p>Opinion hidden</p>
-            <p className="text-[10px] text-gray-500">
-              {`You'll see fewer posts like this.`}
-            </p>
-          </div>
-          <Button variant="ghost" onClick={() => handleUndo(opinion)}>
-            Undo
-          </Button>
-        </div>
+        <UndoOpinion handleUndo={handleUndo} opinion={currOpinion} />
       )}
     </div>
   );

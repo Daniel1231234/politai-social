@@ -1,9 +1,9 @@
 import getCurrentUser from "@/actions/getCurrentUser";
+import getUserOpinions from "@/actions/getUserOpinions";
 import getUserFriends from "@/actions/getUsersFriends";
 import ProfileContent from "@/components/profileCmps/ProfileContent";
 import ProfileHead from "@/components/profileCmps/ProfileHead";
 import Divider from "@/components/ui/Divider";
-import { Opinion } from "@/types/prisma";
 import { notFound } from "next/navigation";
 import React from "react";
 
@@ -13,13 +13,15 @@ const Page = async () => {
 
   const friends = await getUserFriends(user);
 
+  const userOpinions = await getUserOpinions(user.id);
+
   return (
     <div className=" bg-white flex flex-col">
       <ProfileHead user={user} />
       <Divider />
       <ProfileContent
         user={user}
-        userOpinions={user.opinions as Opinion[]}
+        userOpinions={userOpinions}
         friends={friends}
       />
     </div>

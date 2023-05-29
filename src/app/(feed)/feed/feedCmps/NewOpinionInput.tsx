@@ -14,7 +14,7 @@ const NewOpinionInput: React.FC<NewOpinionInputProps> = ({ user }) => {
   return (
     <>
       <div className="flex w-full max-w-md mx-auto my-5">
-        <div className="relative w-10 h-12">
+        <div className="relative w-12 mr-2 h-12">
           <Image
             src={user?.image!}
             alt="profile"

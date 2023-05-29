@@ -16,26 +16,20 @@ type FriendRequest {
   senderName  String
 }
 
-type Like {
-  id       String
-  userName String
-  userId   String
-}
-
 model User {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
   name            String?
   hashPassword    String?
   email           String?         @unique
   emailVerified   DateTime?
-  image           String?
+  image           String?         @default("/images/placeholder.jpg")
   createdAt       DateTime        @default(now()) @updatedAt
   updatedAt       DateTime        @updatedAt
-  birthday        String?
-  addressStreet   String?
+  birthday        DateTime?
+  addressStreet   String?         @default("Hahagana 35, Tel-aviv")
+  country         String?         @default("Israel")
   friendsIds      String[]        @db.ObjectId
   friendsRequests FriendRequest[]
-  country         String?         @default("Israel")
   opinionsIds     String[]        @db.ObjectId
   opinions        Opinion[]
 
@@ -74,25 +68,30 @@ model Opinion {
   createdAt DateTime  @default(now()) @updatedAt
 }
 
+model Like {
+  id          String  @id @default(auto()) @map("_id") @db.ObjectId
+  opinionId   String  @db.ObjectId
+  opinion     Opinion @relation(fields: [opinionId], references: [id])
+  authorId    String  @db.ObjectId
+  authorName  String
+  authorImage String
+}
+
 model Comment {
   id          String  @id @default(auto()) @map("_id") @db.ObjectId
   comment     String
   opinion     Opinion @relation(fields: [opinionId], references: [id])
   opinionId   String  @db.ObjectId
-  authorId    String
+  authorId    String  @db.ObjectId
   authorName  String
   authorImage String
 }
 
-model PoliticalProfile {
-  id               String          @id @default(auto()) @map("_id") @db.ObjectId
+type PoliticalProfile {
   religion         String
-  EconomicOpinion  String
   PoliticalOpinion PoliticalType[]
   ideology         String
-  description      String
-  userId           String          @unique @db.ObjectId
-  user             User            @relation(fields: [userId], references: [id])
+  userId           String
 }
 
 enum PoliticalType {

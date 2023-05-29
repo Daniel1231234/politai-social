@@ -2,6 +2,7 @@ import getCurrentUser from "@/actions/getCurrentUser";
 import prisma from "@/lib/prismadb";
 import { pusherServer } from "@/lib/pusher";
 import { toPusherKey } from "@/lib/utils";
+import { NextResponse } from "next/server";
 
 interface ParamsProps {
     params: { opinionId: string };
@@ -10,32 +11,29 @@ interface ParamsProps {
 export async function POST(req: Request, { params }: ParamsProps) {
     try {
         const opinionId = params.opinionId
-        const newLike = await req.json();
+        console.log('OpinionId => ', opinionId)
+        const newLikeData = await req.json();
 
-        const opinion = await prisma.opinion.findUnique({
-            where: { id: opinionId }
+        const newLike = await prisma.like.create({
+            data: {
+                opinion: { connect: { id: opinionId } },
+                authorId: newLikeData.authorId,
+                authorName: newLikeData.authorName,
+                authorImage: newLikeData.authorImage
+            }
         })
 
-        if (!newLike || !opinion) {
-            return new Response("Missing required fields", { status: 400 });
-        }
+        await pusherServer.trigger(opinionId, "like:new", newLike)
 
-        await Promise.all([
-            prisma.opinion.update({
-                where: { id: opinionId },
-                data: {
-                    likes: { set: [...opinion.likes, newLike] }
-                }
-            }),
-            pusherServer.trigger(toPusherKey(`opinion:${opinionId}:new_like`), "new_like_channel", newLike)
-        ])
-
-        return new Response("Like created successfully", { status: 200 });
+        return new NextResponse("Like created successfully", { status: 200 });
     } catch (err) {
         console.error("Error creating like:", err);
-        return new Response("Internal Server Error", { status: 500 });
+        return new NextResponse("Internal Server Error", { status: 500 });
     }
 }
+
+
+
 
 
 

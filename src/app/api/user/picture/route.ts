@@ -11,14 +11,12 @@ export async function POST(req: Request) {
 
         const body = await req.json()
         console.log('body => ', body)
-        const updatedUSER = await prisma.user.update({
+        await prisma.user.update({
             where: { id: currUser.id },
             data: {
                 image: { set: body.newImageUrl }
             }
         })
-
-        console.log('updatedUser => ', updatedUSER)
 
         return new Response('OK')
     } catch (err) {

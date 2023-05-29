@@ -1,11 +1,11 @@
 import getCurrentUser from "@/actions/getCurrentUser";
 import getUserById from "@/actions/getUserById";
+import getUserOpinions from "@/actions/getUserOpinions";
 import getUserFriends from "@/actions/getUsersFriends";
 import AddFriendButton from "@/components/profileCmps/AddFriendButton";
 import ProfileContent from "@/components/profileCmps/ProfileContent";
 import ProfileHead from "@/components/profileCmps/ProfileHead";
 import Divider from "@/components/ui/Divider";
-import { Opinion } from "@/types/prisma";
 import { notFound, redirect } from "next/navigation";
 import React from "react";
 
@@ -26,7 +26,7 @@ const Page = async ({ params }: PageProps) => {
 
   const friends = await getUserFriends(user);
 
-  const userOpinions = user.opinions as Opinion[];
+  const userOpinions = await getUserOpinions(user.id);
 
   const isAllreadyFrinds = friends?.some(
     (friend) => friend.id === loggedInUser.id

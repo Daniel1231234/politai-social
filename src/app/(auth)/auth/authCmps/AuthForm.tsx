@@ -74,7 +74,7 @@ const AuthForm = () => {
   const socialAction = async (action: string) => {
     setIsLoading(true);
     try {
-      const callback = await signIn(action, { redirect: false });
+      const callback = await signIn(action, { redirect: true });
       if (callback?.error) toast.error("Invalid credentials!");
       if (callback?.ok) router.push("/feed");
     } catch (err) {

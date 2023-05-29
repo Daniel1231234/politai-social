@@ -1,7 +1,5 @@
 import getCurrentUser from "@/actions/getCurrentUser";
 import prisma from "@/lib/prismadb";
-import { pusherServer } from "@/lib/pusher";
-import { toPusherKey } from "@/lib/utils";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
@@ -10,7 +8,7 @@ export async function POST(req: Request) {
         const body = await req.json();
         if (!user?.id || !user?.email) return new NextResponse('Unauthorized', { status: 401 });
 
-        const newOpinion = await prisma.opinion.create({
+        await prisma.opinion.create({
             data: {
                 title: 'Opinion title',
                 body: body.opinion,
@@ -18,20 +16,10 @@ export async function POST(req: Request) {
                 author: {
                     connect: { id: user.id },
                 },
+                likes: {},
+                comments: {}
             },
         });
-
-        await prisma.user.update({
-            where: { id: user.id },
-            data: {
-                opinions: {
-                    connect: { id: newOpinion.id },
-                },
-            },
-        });
-
-        await pusherServer.trigger("new-opinion-channel", "new-opinion", newOpinion)
-
 
 
         return new NextResponse('OK')
